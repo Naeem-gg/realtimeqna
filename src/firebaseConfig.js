@@ -1,18 +1,19 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 
-// NOTE: The USER needs to fill these values from their Firebase Console
-// Find these in Project Settings > General > Your apps (Web app)
+// Initialize Firebase using Vite environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyBZcuwXlj-_Mj4UQ7DoXCfRG1kvfwCT8vE",
-  authDomain: "qnareaktime.firebaseapp.com",
-  databaseURL: "https://qnareaktime-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "qnareaktime",
-  storageBucket: "qnareaktime.firebasestorage.app",
-  messagingSenderId: "209962332089",
-  appId: "1:209962332089:web:dce6e98e0af82694b85068",
-  measurementId: "G-30J0K2BWDT"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
+
+console.log("Firebase config loaded with project ID:", firebaseConfig.projectId);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

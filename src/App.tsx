@@ -73,7 +73,15 @@ function App() {
   };
 
   const handleColorChange = (color: string) => {
-    set(ref(database, "sync/color"), color).catch(console.error);
+    // Toggle: clicking the active color deselects it
+    const newColor = syncData.color === color ? "none" : color;
+    set(ref(database, "sync/color"), newColor).catch(console.error);
+  };
+
+  const handleTextClear = () => {
+    set(ref(database, "sync/text"), null)
+      .then(() => setHelperTextInput(""))
+      .catch(console.error);
   };
 
   const handleTextSubmit = (e: React.FormEvent) => {
@@ -98,6 +106,40 @@ function App() {
         setTimeout(() => setCopied(false), 2000);
       });
     }
+  };
+
+  /**
+   * Dynamic font size based on word count.
+   * Returns inline style + whether to enable scroll.
+   */
+  const getTextStyle = (text: string, isFullscreen: boolean): { fontSize: string; overflow: string; maxHeight: string } => {
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    let size: string;
+    let scroll = false;
+
+    if (isFullscreen) {
+      // Full-screen (no option selected) — larger scale
+      if (words <= 3)        size = "clamp(3.5rem, 14vw, 10rem)";
+      else if (words <= 6)   size = "clamp(2.75rem, 11vw, 8rem)";
+      else if (words <= 12)  size = "clamp(2rem,   8vw,  6rem)";
+      else if (words <= 20)  size = "clamp(1.6rem,  6vw,  4rem)";
+      else if (words <= 35)  size = "clamp(1.25rem, 4vw,  3rem)";
+      else { size = "clamp(1.1rem, 3.5vw, 2.25rem)"; scroll = true; }
+    } else {
+      // Split-view bottom half — tighter container
+      if (words <= 3)        size = "clamp(2rem, 8vw, 5rem)";
+      else if (words <= 8)   size = "clamp(1.6rem, 6vw, 3.75rem)";
+      else if (words <= 15)  size = "clamp(1.3rem, 5vw, 3rem)";
+      else if (words <= 25)  size = "clamp(1.1rem, 4vw, 2.25rem)";
+      else if (words <= 40)  size = "clamp(1rem, 3.5vw, 1.75rem)";
+      else { size = "clamp(0.9rem, 3vw, 1.4rem)"; scroll = true; }
+    }
+
+    return {
+      fontSize: size,
+      overflow: scroll ? "auto" : "hidden",
+      maxHeight: scroll ? "100%" : "unset",
+    };
   };
 
   // ─── 1. Password Screen ──────────────────────────────────────────────────────
@@ -253,9 +295,19 @@ function App() {
                 onChange={(e) => setHelperTextInput(e.target.value)}
                 rows={3}
               />
-              <button type="submit" className="btn-primary">
-                Send Message
-              </button>
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary">
+                  Send
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTextClear}
+                  className="btn-danger"
+                  style={{ flex: '0 0 auto', paddingLeft: '1rem', paddingRight: '1rem' }}
+                >
+                  Clear
+                </button>
+              </div>
             </form>
           </div>
 
@@ -296,7 +348,12 @@ function App() {
             <div className="naeem-bottom">
               {hasText ? (
                 <div className="naeem-text-area animate-fade-in">
-                  <p className="naeem-text">{syncData.text}</p>
+                  <p
+                    className="naeem-text"
+                    style={getTextStyle(syncData.text, false)}
+                  >
+                    {syncData.text}
+                  </p>
                   <button
                     onClick={handleCopy}
                     className={`copy-btn ${copied ? "copied" : ""}`}
@@ -316,7 +373,12 @@ function App() {
           <div className="naeem-fullscreen">
             {hasText ? (
               <div className="naeem-fulltext-area animate-fade-in">
-                <p className="naeem-fulltext">{syncData.text}</p>
+                <p
+                  className="naeem-fulltext"
+                  style={getTextStyle(syncData.text, true)}
+                >
+                  {syncData.text}
+                </p>
                 <button
                   onClick={handleCopy}
                   className={`copy-btn ${copied ? "copied" : ""}`}

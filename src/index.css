@@ -372,19 +372,22 @@ body,
   transition: all 0.2s;
   user-select: none;
 }
-.color-btn.red:active,
+/* Active/selected state — only when .active class is set by React */
 .color-btn.red.active {
   background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.4);
   color: #f87171;
   box-shadow: 0 0 16px var(--color-red-glow);
 }
-.color-btn.green:active,
 .color-btn.green.active {
   background: rgba(34, 197, 94, 0.1);
   border-color: rgba(34, 197, 94, 0.4);
   color: #4ade80;
   box-shadow: 0 0 16px var(--color-green-glow);
+}
+/* Tap feedback — neutral flash, doesn't look "selected" */
+.color-btn:active {
+  filter: brightness(1.2);
 }
 .color-dot {
   width: 9px;
@@ -510,18 +513,18 @@ body,
   width: 100%;
   height: 100%;
   gap: 1rem;
+  /* allow scroll when getTextStyle sets overflow:auto */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem 0;
 }
 .naeem-text {
-  font-size: clamp(1.1rem, 4.5vw, 2.5rem);
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.88);
+  /* font-size is set dynamically by inline style (getTextStyle) */
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
   text-align: center;
-  line-height: 1.4;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  line-clamp: 5;
-  -webkit-box-orient: vertical;
+  line-height: 1.35;
+  width: 100%;
 }
 
 /* Full-screen text (no option selected) */
@@ -541,20 +544,19 @@ body,
   width: 100%;
   height: 100%;
   gap: 2rem;
+  /* allow scroll when getTextStyle sets overflow:auto */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem 0;
 }
 .naeem-fulltext {
-  /* Scales huge on big screens, still readable on phones */
-  font-size: clamp(2.25rem, 10vw, 9rem);
+  /* font-size is set dynamically by inline style (getTextStyle) */
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
   text-align: center;
-  line-height: 1.15;
+  line-height: 1.2;
   letter-spacing: -0.02em;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
-  -webkit-box-orient: vertical;
+  width: 100%;
 }
 
 /* Copy button */

@@ -13,7 +13,12 @@ import "./index.css";
 
 function App() {
   const [password, setPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Restore session from localStorage on first render
+    const stored = localStorage.getItem("qna_auth");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return stored !== null && stored === import.meta.env.VITE_PASSWORD;
+  });
   const [role, setRole] = useState<"helper" | "naeem" | null>(null);
   const [syncData, setSyncData] = useState<{
     option: string | null;
@@ -47,12 +52,19 @@ function App() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === import.meta.env.VITE_PASSWORD) {
+      localStorage.setItem("qna_auth", password);
       setIsAuthenticated(true);
     } else {
       const input = document.getElementById("pw-input");
       input?.classList.add("shake");
       setTimeout(() => input?.classList.remove("shake"), 500);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("qna_auth");
+    setIsAuthenticated(false);
+    setRole(null);
   };
 
   const handleOptionSelect = (opt: string) => {
@@ -127,7 +139,16 @@ function App() {
   if (!role) {
     return (
       <div className="app-bg screen-center">
-        <div className="card animate-slide-up">
+        <div className="card animate-slide-up" style={{ position: 'relative' }}>
+          {/* Logout — clears localStorage and goes back to login */}
+          <button
+            onClick={handleLogout}
+            className="icon-btn"
+            style={{ position: 'absolute', top: '1rem', right: '1rem' }}
+            title="Log out"
+          >
+            <LogOut size={17} />
+          </button>
           <div className="flex flex-col items-center mb-7">
             <div className="icon-ring mb-4">
               <Users size={24} strokeWidth={1.75} />

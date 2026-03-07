@@ -28,7 +28,6 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  /* Better tap highlighting on mobile */
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -36,7 +35,6 @@ html,
 body,
 #root {
   height: 100%;
-  /* Use 100dvh so mobile chrome/safari address bar is accounted for */
   min-height: 100dvh;
   font-family: var(--font-sans);
   background: var(--color-bg);
@@ -45,7 +43,7 @@ body,
   overscroll-behavior: none;
 }
 
-/* ── Animations ─────────────────────────────────────────────────────────────── */
+/* ── All Animations (inside @layer utilities so Tailwind v4 keeps them) ───── */
 @layer utilities {
   .animate-slide-up {
     animation: slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -59,66 +57,51 @@ body,
   .animate-pulse-slow {
     animation: pulseSlow 2.5s ease-in-out infinite;
   }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(18px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  @keyframes popIn {
-    from {
-      opacity: 0;
-      transform: scale(0.6);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  @keyframes pulseSlow {
-    0%,
-    100% {
-      opacity: 0.25;
-    }
-    50% {
-      opacity: 0.55;
-    }
-  }
-  @keyframes shake {
-    0%,
-    100% {
-      transform: translateX(0);
-    }
-    20% {
-      transform: translateX(-8px);
-    }
-    40% {
-      transform: translateX(8px);
-    }
-    60% {
-      transform: translateX(-6px);
-    }
-    80% {
-      transform: translateX(6px);
-    }
-  }
   .shake {
     animation: shake 0.45s ease;
+  }
+
+  /* ── Blink animations ── */
+  .blink-option-active {
+    animation: hardBlink 0.7s infinite !important;
+  }
+  .blink-color-active {
+    animation: hardBlinkBg 0.8s infinite !important;
+  }
+  .blink-screen-active {
+    animation: hardBlink 0.6s infinite !important;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseSlow {
+    0%, 100% { opacity: 0.25; }
+    50%      { opacity: 0.55; }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(8px); }
+    60%      { transform: translateX(-6px); }
+    80%      { transform: translateX(6px); }
+  }
+  @keyframes hardBlink {
+    0%, 49%   { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  @keyframes hardBlinkBg {
+    0%, 49%   { filter: brightness(1); }
+    50%, 100% { filter: brightness(0.2); }
   }
 }
 
@@ -133,8 +116,6 @@ body,
 }
 
 /* ── Screen layouts ─────────────────────────────────────────────────────────── */
-
-/* Centered screens (login, role select) */
 .screen-center {
   display: flex;
   align-items: center;
@@ -144,7 +125,6 @@ body,
   padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px) 16px;
 }
 
-/* Helper scrollable screen */
 .helper-scroll {
   width: 100vw;
   min-height: 100dvh;
@@ -161,7 +141,6 @@ body,
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  /* Comfortable padding on mobile */
   padding: 1.5rem 1.25rem;
   width: 100%;
   max-width: 480px;
@@ -187,7 +166,6 @@ body,
 /* ── Form Field ─────────────────────────────────────────────────────────────── */
 .field {
   width: 100%;
-  /* min 16px font prevents iOS auto-zoom on focus */
   font-size: 16px;
   padding: 0.8rem 1rem;
   background: var(--color-elevated);
@@ -196,16 +174,11 @@ body,
   color: #e2e8f0;
   font-family: var(--font-sans);
   outline: none;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-  /* Disable iOS rounded corners */
+  transition: border-color 0.2s, box-shadow 0.2s;
   -webkit-appearance: none;
   appearance: none;
 }
-.field::placeholder {
-  color: var(--color-muted);
-}
+.field::placeholder { color: var(--color-muted); }
 .field:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-glow);
@@ -218,7 +191,6 @@ body,
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  /* Tall enough to be a good touch target (min 44px) */
   padding: 0.875rem 1.25rem;
   border-radius: 10px;
   background: var(--color-primary);
@@ -227,12 +199,8 @@ body,
   font-size: 1rem;
   cursor: pointer;
   border: none;
-  transition:
-    background 0.2s,
-    transform 0.15s,
-    box-shadow 0.2s;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
   box-shadow: 0 4px 12px var(--color-primary-glow);
-  /* Prevent double-tap zoom */
   touch-action: manipulation;
 }
 .btn-primary:active {
@@ -254,13 +222,9 @@ body,
   font-size: 0.9375rem;
   cursor: pointer;
   touch-action: manipulation;
-  transition:
-    background 0.2s,
-    color 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
-.btn-danger:active {
-  background: rgba(239, 68, 68, 0.15);
-}
+.btn-danger:active { background: rgba(239, 68, 68, 0.15); }
 .btn-danger.btn-success {
   background: rgba(34, 197, 94, 0.1);
   color: #4ade80;
@@ -268,7 +232,6 @@ body,
 }
 
 .icon-btn {
-  /* 44x44 minimum touch target */
   width: 44px;
   height: 44px;
   border-radius: 10px;
@@ -280,9 +243,7 @@ body,
   justify-content: center;
   cursor: pointer;
   touch-action: manipulation;
-  transition:
-    color 0.2s,
-    background 0.2s;
+  transition: color 0.2s, background 0.2s;
   flex-shrink: 0;
 }
 .icon-btn:active {
@@ -296,7 +257,6 @@ body,
   flex-direction: column;
   align-items: flex-start;
   gap: 0.625rem;
-  /* Comfortable touch padding */
   padding: 1.125rem 1rem;
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
@@ -304,10 +264,7 @@ body,
   text-align: left;
   cursor: pointer;
   touch-action: manipulation;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
-  /* Prevent text selection on tap */
+  transition: border-color 0.2s, background 0.2s;
   user-select: none;
 }
 .role-card:active {
@@ -359,7 +316,6 @@ body,
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  /* Minimum 44px height for touch comfort */
   padding: 0.825rem 1rem;
   border-radius: 10px;
   border: 1px solid var(--color-border);
@@ -372,7 +328,6 @@ body,
   transition: all 0.2s;
   user-select: none;
 }
-/* Active/selected state — only when .active class is set by React */
 .color-btn.red.active {
   background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.4);
@@ -385,10 +340,7 @@ body,
   color: #4ade80;
   box-shadow: 0 0 16px var(--color-green-glow);
 }
-/* Tap feedback — neutral flash, doesn't look "selected" */
-.color-btn:active {
-  filter: brightness(1.2);
-}
+.color-btn:active { filter: brightness(1.2); }
 .color-dot {
   width: 9px;
   height: 9px;
@@ -396,7 +348,7 @@ body,
   flex-shrink: 0;
 }
 
-/* Option buttons — wider touch targets on mobile */
+/* Option buttons */
 .opt-btn {
   aspect-ratio: 1;
   display: flex;
@@ -437,24 +389,14 @@ body,
   transition: background-color 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
-.naeem-root.color-dark {
-  background-color: var(--color-bg);
-}
+.naeem-root.color-dark { background-color: var(--color-bg); }
 .naeem-root.color-red {
   background-color: #991b1b;
-  background-image: radial-gradient(
-    ellipse at center top,
-    #ef4444 0%,
-    #7f1d1d 100%
-  );
+  background-image: radial-gradient(ellipse at center top, #ef4444 0%, #7f1d1d 100%);
 }
 .naeem-root.color-green {
   background-color: #14532d;
-  background-image: radial-gradient(
-    ellipse at center top,
-    #22c55e 0%,
-    #052e16 100%
-  );
+  background-image: radial-gradient(ellipse at center top, #22c55e 0%, #052e16 100%);
 }
 
 .naeem-top {
@@ -474,12 +416,10 @@ body,
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Respect safe-area on bottom */
   padding: 1.25rem 1.5rem max(env(safe-area-inset-bottom, 0px), 1.25rem) 1.5rem;
   overflow: hidden;
 }
 
-/* Large letter — scales from mobile to desktop */
 .naeem-letter {
   font-size: clamp(6rem, 45vmin, 32rem);
   font-weight: 700;
@@ -505,7 +445,8 @@ body,
   color: rgba(255, 255, 255, 0.2);
 }
 
-.naeem-text-area {
+.naeem-text-area,
+.naeem-fulltext-area {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -513,13 +454,13 @@ body,
   width: 100%;
   height: 100%;
   gap: 1rem;
-  /* allow scroll when getTextStyle sets overflow:auto */
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0.5rem 0;
 }
+.naeem-fulltext-area { gap: 2rem; }
+
 .naeem-text {
-  /* font-size is set dynamically by inline style (getTextStyle) */
   font-weight: 500;
   color: rgba(255, 255, 255, 0.92);
   text-align: center;
@@ -527,7 +468,6 @@ body,
   width: 100%;
 }
 
-/* Full-screen text (no option selected) */
 .naeem-fullscreen {
   flex: 1;
   display: flex;
@@ -536,21 +476,7 @@ body,
   padding: max(env(safe-area-inset-top, 0px), 60px) 5vw max(env(safe-area-inset-bottom, 0px), 48px) 5vw;
   overflow: hidden;
 }
-.naeem-fulltext-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  gap: 2rem;
-  /* allow scroll when getTextStyle sets overflow:auto */
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 0.5rem 0;
-}
 .naeem-fulltext {
-  /* font-size is set dynamically by inline style (getTextStyle) */
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
   text-align: center;
@@ -564,7 +490,6 @@ body,
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  /* Min 44px height for touch */
   padding: 0.65rem 1.25rem;
   border-radius: 99px;
   background: rgba(255, 255, 255, 0.1);
@@ -578,17 +503,14 @@ body,
   flex-shrink: 0;
   user-select: none;
 }
-.copy-btn:active {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
-}
+.copy-btn:active { background: rgba(255, 255, 255, 0.22); color: #fff; }
 .copy-btn.copied {
   background: rgba(34, 197, 94, 0.2);
   border-color: rgba(34, 197, 94, 0.4);
   color: #4ade80;
 }
 
-/* Back button — safe-area aware */
+/* Back button */
 .naeem-back {
   position: absolute;
   top: max(env(safe-area-inset-top, 0px), 1rem);
@@ -604,12 +526,35 @@ body,
   cursor: pointer;
   touch-action: manipulation;
   transition: all 0.2s;
-  /* Good touch target size */
   min-height: 44px;
   display: flex;
   align-items: center;
 }
-.naeem-back:active {
-  background: rgba(0, 0, 0, 0.5);
-  color: rgba(255, 255, 255, 0.9);
+.naeem-back:active { background: rgba(0, 0, 0, 0.5); color: rgba(255, 255, 255, 0.9); }
+
+/* ── Peek Preview (gradients that Tailwind can't do) ───────────────────────── */
+.peek-screen {
+  transition: background-color 0.6s ease;
+}
+.peek-screen-red {
+  background-color: #991b1b;
+  background-image: radial-gradient(ellipse at center top, #ef4444 0%, #7f1d1d 100%);
+}
+.peek-screen-green {
+  background-color: #14532d;
+  background-image: radial-gradient(ellipse at center top, #22c55e 0%, #052e16 100%);
+}
+
+/* ── Hyperlink Styles ──────────────────────────────────────────────────────── */
+.naeem-link {
+  color: #93c5fd;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  word-break: break-all;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.naeem-link:hover,
+.naeem-link:active {
+  color: #bfdbfe;
 }

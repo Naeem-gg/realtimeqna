@@ -87,10 +87,12 @@ const getTextStyle = (text: string, isFullscreen: boolean) => {
 // ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
   const [password, setPassword] = useState("");
+  const [remotePassword, setRemotePassword] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const stored = localStorage.getItem("qna_auth");
     return stored !== null && stored === import.meta.env.VITE_PASSWORD;
   });
+  const [secretClicks, setSecretClicks] = useState(0);
   const [role, setRole] = useState<"helper" | "naeem" | null>(null);
   const [syncData, setSyncData] = useState<SyncData>({
     option: null,
@@ -105,6 +107,25 @@ function App() {
   const [showTextPreview, setShowTextPreview] = useState(false);
 
   useEffect(() => {
+    const pwRef = ref(database, "settings/password");
+    const unsubPw = onValue(pwRef, (snapshot) => {
+      const dbPw = snapshot.val();
+      setRemotePassword(dbPw);
+      
+      const stored = localStorage.getItem("qna_auth");
+      const activePw = dbPw || import.meta.env.VITE_PASSWORD;
+      
+      if (stored !== null) {
+        if (stored === activePw) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+          setRole(null);
+          localStorage.removeItem("qna_auth");
+        }
+      }
+    });
+
     const syncRef = ref(database, "sync");
     const unsubscribe = onValue(syncRef, (snapshot) => {
       const data = snapshot.val();
@@ -124,12 +145,16 @@ function App() {
         setSyncData({ option: null, text: "", color: "none", blink: { option: false, color: false, screen: false } });
       }
     });
-    return () => unsubscribe();
+    return () => {
+      unsubPw();
+      unsubscribe();
+    };
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === import.meta.env.VITE_PASSWORD) {
+    const activePw = remotePassword || import.meta.env.VITE_PASSWORD;
+    if (password === activePw) {
       localStorage.setItem("qna_auth", password);
       setIsAuthenticated(true);
     } else {
@@ -209,7 +234,29 @@ function App() {
       <div className="app-bg screen-center">
         <div className="card animate-slide-up">
           <div className="flex flex-col items-center mb-7">
-            <div className="icon-ring mb-4">
+            <div 
+              className="icon-ring mb-4"
+              onClick={() => {
+                setSecretClicks((prev) => {
+                  const next = prev + 1;
+                  if (next >= 5) {
+                    setTimeout(() => {
+                      const newPw = prompt("Secret mode: Enter new unlock password (leave blank to reset to default):");
+                      if (newPw !== null) {
+                        set(ref(database, "settings/password"), newPw.trim() || null)
+                          .then(() => {
+                            alert("Password updated globally!");
+                            setPassword("");
+                          })
+                          .catch((err) => alert("Failed to update password: " + err.message));
+                      }
+                    }, 50);
+                    return 0;
+                  }
+                  return next;
+                });
+              }}
+            >
               <ShieldCheck size={26} strokeWidth={1.75} />
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-white">Secure Access</h1>

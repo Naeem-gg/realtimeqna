@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { database } from "./firebaseConfig";
 import { ref, onValue, set } from "firebase/database";
 import {
-  ShieldCheck,
-  Users,
   Wand2,
   Copy,
   RotateCcw,
@@ -15,10 +13,10 @@ import {
   Check,
   ArrowLeft,
   Monitor,
+  Radio,
 } from "lucide-react";
 import "./index.css";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface BlinkState {
   option: boolean;
   color: boolean;
@@ -32,9 +30,6 @@ interface SyncData {
   blink: BlinkState;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Parses text into React nodes, converting URLs and [label](url) into links. */
 function renderTextWithLinks(text: string): React.ReactNode[] {
   const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"]+)/g;
   const parts: React.ReactNode[] = [];
@@ -64,7 +59,6 @@ function renderTextWithLinks(text: string): React.ReactNode[] {
   return parts.length > 0 ? parts : [text];
 }
 
-/** Dynamic font size based on word count. */
 const getTextStyle = (text: string, isFullscreen: boolean) => {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   let size: string;
@@ -90,7 +84,6 @@ const getTextStyle = (text: string, isFullscreen: boolean) => {
 
 const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
-// ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -248,103 +241,107 @@ function App() {
     });
   };
 
-  // ─── 1. Password Screen ──────────────────────────────────────────────────────
+  // ─── Auth ────────────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="app-bg screen-center">
-        <div className="card animate-slide-up">
-          <div className="flex flex-col items-center mb-7">
-            <div
-              className="icon-ring mb-4"
-              onClick={() => {
-                setSecretClicks((prev) => {
-                  const next = prev + 1;
-                  if (next >= 5) {
-                    setTimeout(() => {
-                      const newPw = prompt("Secret mode: Enter new unlock password (leave blank to reset to default):");
-                      if (newPw !== null) {
-                        set(ref(database, "settings/password"), newPw.trim() || null)
-                          .then(() => {
-                            alert("Password updated globally!");
-                            setPassword("");
-                          })
-                          .catch((err) => alert("Failed to update password: " + err.message));
-                      }
-                    }, 50);
-                    return 0;
-                  }
-                  return next;
-                });
-              }}
-            >
-              <ShieldCheck size={26} strokeWidth={1.75} />
-            </div>
-            <h1 className="text-xl font-semibold tracking-tight text-white">Secure Access</h1>
-            <p className="text-slate-500 text-sm mt-1.5">Enter your passphrase to continue</p>
-          </div>
-          <form onSubmit={handleLogin} className="flex flex-col gap-3">
-            <div className="field-wrap">
-              <input
-                id="pw-input"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (loginError) setLoginError(false);
+      <div className="shell shell-center">
+        <div className="auth anim-enter">
+          <div className="auth-card">
+            <div className="auth-brand">
+              <div
+                className="auth-logo"
+                onClick={() => {
+                  setSecretClicks((prev) => {
+                    const next = prev + 1;
+                    if (next >= 5) {
+                      setTimeout(() => {
+                        const newPw = prompt("Admin: enter new unlock password (blank = reset default):");
+                        if (newPw !== null) {
+                          set(ref(database, "settings/password"), newPw.trim() || null)
+                            .then(() => {
+                              alert("Password updated.");
+                              setPassword("");
+                            })
+                            .catch((err) => alert("Failed: " + err.message));
+                        }
+                      }, 50);
+                      return 0;
+                    }
+                    return next;
+                  });
                 }}
-                className="field text-center tracking-[0.3em] text-lg"
-                autoComplete="current-password"
-                autoFocus
-              />
-              <button
-                type="button"
-                className="field-eye"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+                QN
+              </div>
+              <h1 className="auth-title">QNA Realtime</h1>
+              <p className="auth-desc">Sign in to open the live cue console</p>
             </div>
-            <p className="field-error" role="alert">
-              {loginError ? "Incorrect passphrase — try again" : "\u00A0"}
-            </p>
-            <button type="submit" className="btn-primary" disabled={!password.trim()}>
-              Unlock
-            </button>
-          </form>
+            <form onSubmit={handleLogin} className="auth-form">
+              <div className="field-row">
+                <input
+                  id="pw-input"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Passphrase"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (loginError) setLoginError(false);
+                  }}
+                  className="field"
+                  autoComplete="current-password"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  className="btn-icon field-affix"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+              <p className="field-error" role="alert">
+                {loginError ? "Incorrect passphrase" : "\u00A0"}
+              </p>
+              <button type="submit" className="btn btn-primary" disabled={!password.trim()}>
+                Continue
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ─── 2. Role Selection ───────────────────────────────────────────────────────
+  // ─── Role ────────────────────────────────────────────────────────────────────
   if (!role) {
     return (
-      <div className="app-bg screen-center">
-        <div className="card animate-slide-up relative">
-          <button onClick={handleLogout} className="icon-btn absolute top-4 right-4" title="Log out">
-            <LogOut size={17} />
-          </button>
-          <div className="flex flex-col items-center mb-7">
-            <div className="icon-ring mb-4">
-              <Users size={24} strokeWidth={1.75} />
+      <div className="shell shell-center">
+        <div className="frame anim-enter" style={{ maxWidth: 440 }}>
+          <div className="topbar">
+            <div className="brand">
+              <div className="brand-mark">QN</div>
+              <div className="brand-text">
+                <span className="brand-name">QNA Realtime</span>
+                <span className="brand-sub">Select workspace</span>
+              </div>
             </div>
-            <h1 className="text-xl font-semibold tracking-tight text-white">Choose Role</h1>
-            <p className="text-slate-500 text-sm mt-1.5 text-center px-2">
-              Pick how this device will be used
-            </p>
+            <button onClick={handleLogout} className="btn-icon" title="Sign out">
+              <LogOut size={15} />
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="role-grid">
             <button onClick={() => setRole("helper")} className="role-card">
-              <div className="role-icon"><Wand2 size={20} strokeWidth={1.75} /></div>
+              <div className="role-icon"><Wand2 size={18} strokeWidth={1.75} /></div>
               <span className="role-label">Helper</span>
-              <span className="role-sub">Send cues &amp; signals</span>
+              <span className="role-desc">Operator console for cues, signals, and broadcast text</span>
+              <span className="role-kbd">CONTROL</span>
             </button>
             <button onClick={() => setRole("naeem")} className="role-card">
-              <div className="role-icon"><Monitor size={20} strokeWidth={1.75} /></div>
+              <div className="role-icon"><Monitor size={18} strokeWidth={1.75} /></div>
               <span className="role-label">Naeem</span>
-              <span className="role-sub">Fullscreen display</span>
+              <span className="role-desc">Fullscreen display for live answers and messages</span>
+              <span className="role-kbd">DISPLAY</span>
             </button>
           </div>
         </div>
@@ -352,7 +349,7 @@ function App() {
     );
   }
 
-  // ─── 3. Helper Screen ────────────────────────────────────────────────────────
+  // ─── Helper ──────────────────────────────────────────────────────────────────
   if (role === "helper") {
     const hasLinks =
       helperTextInput.includes("http://") ||
@@ -368,282 +365,264 @@ function App() {
       syncData.color !== "none" ||
       anyBlink;
 
-    const peekBg =
-      syncData.color === "red" ? "peek-screen-red" :
-        syncData.color === "green" ? "peek-screen-green" :
-          "bg-[#080c14]";
-
-    const peekBlinkClasses = [
-      peekBg,
+    const stageClass = [
+      "preview-stage",
+      syncData.color === "red" ? "red" : "",
+      syncData.color === "green" ? "green" : "",
       syncData.blink.screen ? "blink-screen-active" : "",
       !syncData.blink.screen && syncData.blink.color ? "blink-color-active" : "",
     ].filter(Boolean).join(" ");
 
     return (
-      <div className="app-bg helper-scroll">
-        <div className="card animate-slide-up">
-
-          {/* ── Header ── */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-lg font-semibold text-white leading-tight">Control Panel</h1>
-              <p className="text-slate-500 text-xs mt-0.5">Sync content to Naeem&apos;s screen</p>
+      <div className="shell shell-scroll">
+        <div className="frame frame-flush anim-enter">
+          <div className="topbar">
+            <div className="brand">
+              <div className="brand-mark">QN</div>
+              <div className="brand-text">
+                <span className="brand-name">Control</span>
+                <span className="brand-sub">Helper console</span>
+              </div>
             </div>
-            <button onClick={() => setRole(null)} className="icon-btn" title="Change role">
-              <LogOut size={17} />
-            </button>
+            <div className="topbar-actions">
+              <span className={`badge ${hasLiveContent ? "badge-live" : "badge-idle"}`}>
+                <span className={`badge-dot ${hasLiveContent ? "anim-dot" : ""}`} />
+                {hasLiveContent ? "Live" : "Idle"}
+              </span>
+              <button onClick={() => setRole(null)} className="btn-icon" title="Switch role">
+                <LogOut size={15} />
+              </button>
+            </div>
           </div>
 
-          {/* ── Live status ── */}
-          <div className="status-strip" aria-live="polite">
+          <div className="telemetry" aria-live="polite">
             {hasLiveContent ? (
               <>
-                <span className="status-live">
-                  <span className="status-live-dot animate-live-dot" />
-                  Live
-                </span>
-                {syncData.option && (
-                  <span className="status-chip on">Option {syncData.option}</span>
-                )}
-                {syncData.color === "red" && <span className="status-chip red">Red</span>}
-                {syncData.color === "green" && <span className="status-chip green">Green</span>}
-                {anyBlink && <span className="status-chip warn">Blinking</span>}
-                {syncData.text && <span className="status-chip on">Text on</span>}
+                <Radio size={12} style={{ color: "var(--color-ok)", flexShrink: 0 }} />
+                {syncData.option && <span className="chip chip-accent">{syncData.option}</span>}
+                {syncData.color === "red" && <span className="chip chip-red">RED</span>}
+                {syncData.color === "green" && <span className="chip chip-green">GREEN</span>}
+                {anyBlink && <span className="chip chip-warn">BLINK</span>}
+                {syncData.text && <span className="chip">TEXT</span>}
               </>
             ) : (
-              <span className="status-idle">Screen idle — nothing broadcasting yet</span>
+              <span className="telemetry-empty">No active cues — display is clear</span>
             )}
           </div>
 
-          {/* ── Section: Peek ── */}
-          <div className="section">
-            <div className="section-label-row">
-              <label className="section-label">Peek</label>
-            </div>
+          <div className="body">
+            {/* Preview */}
+            <div className="panel">
+              <div className="panel-head">
+                <span className="panel-title">Monitor</span>
+              </div>
+              <button
+                onClick={() => setIsPeeking((p) => !p)}
+                className={`preview-toggle ${isPeeking ? "active" : ""}`}
+                aria-pressed={isPeeking}
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  {isPeeking ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {isPeeking ? "Hide preview" : "Show display preview"}
+                </span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, opacity: 0.6 }}>
+                  {isPeeking ? "ON" : "OFF"}
+                </span>
+              </button>
 
-            <button
-              onClick={() => setIsPeeking((p) => !p)}
-              className={`peek-toggle ${isPeeking ? "active" : ""}`}
-              aria-pressed={isPeeking}
-            >
-              {isPeeking ? <EyeOff size={15} /> : <Eye size={15} />}
-              {isPeeking ? "Hide live preview" : "Show live preview"}
-            </button>
-
-            {isPeeking && (
-              <div className="mt-0.5 flex flex-col items-center gap-1.5 animate-fade-in">
-                <div
-                  className={`w-full border border-white/10 overflow-hidden flex flex-col peek-screen ${peekBlinkClasses}`}
-                  style={{ aspectRatio: "16/9" }}
-                >
-                  {syncData.option ? (
-                    <>
-                      <div className="flex-[0_0_60%] flex items-center justify-center">
-                        <span
-                          className={[
-                            "font-bold leading-none",
-                            syncData.color === "none" ? "text-blue-400" : "text-white/95",
-                            syncData.blink.option ? "blink-option-active" : "",
-                          ].filter(Boolean).join(" ")}
-                          style={{ fontSize: "clamp(1.5rem, 8vw, 4rem)" }}
-                        >
-                          {syncData.option}
-                        </span>
-                      </div>
-                      <div className="h-px bg-white/10 shrink-0" />
-                      <div className="flex-1 flex items-center justify-center p-2 overflow-hidden">
+              {isPeeking && (
+                <div className="anim-fade">
+                  <div className={stageClass}>
+                    {syncData.option ? (
+                      <>
+                        <div className="preview-letter">
+                          <span className={syncData.blink.option ? "blink-option-active" : ""}>
+                            {syncData.option}
+                          </span>
+                        </div>
+                        <div className="preview-split" />
+                        <div className="preview-text">
+                          {syncData.text
+                            ? renderTextWithLinks(syncData.text)
+                            : <span className="preview-empty">No text</span>}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="preview-text" style={{ flex: 1 }}>
                         {syncData.text
-                          ? <p className="text-white/90 text-center font-medium leading-snug" style={{ fontSize: "clamp(0.55rem, 2vw, 0.8rem)", wordBreak: "break-word" }}>{renderTextWithLinks(syncData.text)}</p>
-                          : <span className="text-white/25 italic" style={{ fontSize: "0.65rem" }}>No text yet</span>}
+                          ? renderTextWithLinks(syncData.text)
+                          : <span className="preview-empty">Waiting…</span>}
                       </div>
-                    </>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
-                      {syncData.text
-                        ? <p className="text-white/90 text-center font-semibold leading-snug" style={{ fontSize: "clamp(0.6rem, 2.5vw, 0.9rem)", wordBreak: "break-word" }}>{renderTextWithLinks(syncData.text)}</p>
-                        : <span className="text-white/25 italic" style={{ fontSize: "0.65rem" }}>Waiting...</span>}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <p className="preview-caption">Live · read only</p>
                 </div>
-                <p className="peek-caption">Live preview · read-only</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* ── Section: Colors ── */}
-          <div className="section">
-            <div className="section-label-row">
-              <label className="section-label">Background</label>
-              {syncData.color !== "none" && (
-                <span className={`status-chip ${syncData.color}`}>
-                  {syncData.color === "red" ? "Red" : "Green"}
+            {/* Background */}
+            <div className="panel">
+              <div className="panel-head">
+                <span className="panel-title">Background</span>
+                {syncData.color !== "none" && (
+                  <span className={`chip ${syncData.color === "red" ? "chip-red" : "chip-green"}`}>
+                    {syncData.color.toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="seg seg-2">
+                <button
+                  onClick={() => handleColorChange("red")}
+                  className={`seg-btn red ${syncData.color === "red" ? "active" : ""}`}
+                  aria-pressed={syncData.color === "red"}
+                >
+                  <span className="signal-dot" style={{ background: "var(--color-signal-red)" }} />
+                  Red
+                </button>
+                <button
+                  onClick={() => handleColorChange("green")}
+                  className={`seg-btn green ${syncData.color === "green" ? "active" : ""}`}
+                  aria-pressed={syncData.color === "green"}
+                >
+                  <span className="signal-dot" style={{ background: "var(--color-signal-green)" }} />
+                  Green
+                </button>
+              </div>
+            </div>
+
+            {/* Options */}
+            <div className="panel">
+              <div className="panel-head">
+                <span className="panel-title">Answer key</span>
+                {syncData.option && <span className="chip chip-accent">{syncData.option}</span>}
+              </div>
+              <div className="seg seg-6">
+                {["A", "B", "C", "D", "E", "F"].map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => handleOptionSelect(opt)}
+                    className={`seg-btn opt-btn ${syncData.option === opt ? "active" : ""}`}
+                    aria-pressed={syncData.option === opt}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Blink */}
+            <div className="panel">
+              <div className="panel-head">
+                <span className="panel-title" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <Zap size={11} />
+                  Attention
                 </span>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => handleColorChange("red")}
-                className={`color-btn red ${syncData.color === "red" ? "active" : ""}`}
-                aria-pressed={syncData.color === "red"}
-              >
-                <span className="color-dot bg-red-500" />
-                Red
-              </button>
-              <button
-                onClick={() => handleColorChange("green")}
-                className={`color-btn green ${syncData.color === "green" ? "active" : ""}`}
-                aria-pressed={syncData.color === "green"}
-              >
-                <span className="color-dot bg-green-500" />
-                Green
-              </button>
-            </div>
-          </div>
-
-          {/* ── Section: Options ── */}
-          <div className="section">
-            <div className="section-label-row">
-              <label className="section-label">Option A–F</label>
-              {syncData.option && (
-                <span className="status-chip on">{syncData.option}</span>
-              )}
-            </div>
-            <div className="grid grid-cols-6 gap-2">
-              {["A", "B", "C", "D", "E", "F"].map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => handleOptionSelect(opt)}
-                  className={`opt-btn ${syncData.option === opt ? "active" : ""}`}
-                  aria-pressed={syncData.option === opt}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Section: Blink Controls ── */}
-          <div className="section">
-            <div className="section-label-row">
-              <label className="section-label">
-                <Zap size={11} />
-                Blink
-              </label>
-              {anyBlink && <span className="status-chip warn">On</span>}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => handleBlinkToggle("option")}
-                className={`blink-btn ${syncData.blink.option ? "active" : ""}`}
-                aria-pressed={syncData.blink.option}
-              >
-                <span className="blink-dot" />
-                Letter
-              </button>
-              <button
-                onClick={() => handleBlinkToggle("color")}
-                className={`blink-btn ${syncData.blink.color ? "active" : ""}`}
-                aria-pressed={syncData.blink.color}
-              >
-                <span className="blink-dot" />
-                Color
-              </button>
-              <button
-                onClick={() => handleBlinkToggle("screen")}
-                className={`blink-btn col-span-2 ${syncData.blink.screen ? "active" : ""}`}
-                aria-pressed={syncData.blink.screen}
-              >
-                <span className="blink-dot" />
-                Whole screen
-              </button>
-            </div>
-          </div>
-
-          {/* ── Section: Text ── */}
-          <div className="section">
-            <div className="section-label-row">
-              <label className="section-label">Broadcast text</label>
-              {textDirty && <span className="status-chip on">Unsent</span>}
-            </div>
-            <form onSubmit={handleTextSubmit} className="flex flex-col gap-2">
-              <textarea
-                className="field resize-none text-sm leading-relaxed"
-                placeholder={`Type a message...\nBare URL: https://example.com\nMarkdown: [label](https://url.com)`}
-                value={helperTextInput}
-                onChange={(e) => {
-                  setHelperTextInput(e.target.value);
-                  setShowTextPreview(false);
-                }}
-                onKeyDown={(e) => {
-                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                    e.preventDefault();
-                    (e.currentTarget.form as HTMLFormElement | null)?.requestSubmit();
-                  }
-                }}
-                rows={3}
-              />
-
-              <div className="text-meta">
-                <span>
-                  {words > 0 ? `${words} word${words === 1 ? "" : "s"}` : "Empty"}
-                  {" · "}
-                  Ctrl+Enter to send
-                </span>
-                {textDirty ? <span className="dirty">Not on screen yet</span> : null}
+                {anyBlink && <span className="chip chip-warn">ACTIVE</span>}
               </div>
-
-              {hasLinks && (
-                <div className="hint-banner">
-                  <Link2 size={13} strokeWidth={2} />
-                  Links will be tappable on Naeem&apos;s screen
-                </div>
-              )}
-
-              {(showTextPreview || hasLinks) && helperTextInput.trim() && (
-                <div className="preview-box animate-fade-in">
-                  <p className="preview-label">Preview</p>
-                  <p className="text-sm text-white/75 leading-relaxed wrap-break-word">
-                    {renderTextWithLinks(helperTextInput)}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-2">
+              <div className="toggle-grid">
                 <button
-                  type="submit"
-                  className={`btn-primary ${textDirty ? "is-dirty" : ""}`}
-                  disabled={!textDirty}
+                  onClick={() => handleBlinkToggle("option")}
+                  className={`toggle ${syncData.blink.option ? "active" : ""}`}
+                  aria-pressed={syncData.blink.option}
                 >
-                  {textSent ? (
-                    <>
-                      <Check size={15} />
-                      Sent
-                    </>
-                  ) : (
-                    "Send"
-                  )}
+                  Letter
+                  <span className="toggle-switch" />
                 </button>
                 <button
-                  type="button"
-                  onClick={handleTextClear}
-                  className="btn-danger shrink-0 px-4"
-                  disabled={!helperTextInput && !syncData.text}
+                  onClick={() => handleBlinkToggle("color")}
+                  className={`toggle ${syncData.blink.color ? "active" : ""}`}
+                  aria-pressed={syncData.blink.color}
                 >
-                  Clear
+                  Color
+                  <span className="toggle-switch" />
+                </button>
+                <button
+                  onClick={() => handleBlinkToggle("screen")}
+                  className={`toggle toggle-wide ${syncData.blink.screen ? "active" : ""}`}
+                  aria-pressed={syncData.blink.screen}
+                >
+                  Whole screen
+                  <span className="toggle-switch" />
                 </button>
               </div>
-            </form>
+            </div>
+
+            {/* Text */}
+            <div className="panel">
+              <div className="panel-head">
+                <span className="panel-title">Broadcast</span>
+                {textDirty && <span className="chip chip-accent">UNSENT</span>}
+              </div>
+              <form onSubmit={handleTextSubmit}>
+                <textarea
+                  className="field"
+                  placeholder={"Message to display…\nhttps://example.com\n[label](https://url.com)"}
+                  value={helperTextInput}
+                  onChange={(e) => {
+                    setHelperTextInput(e.target.value);
+                    setShowTextPreview(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                      e.preventDefault();
+                      e.currentTarget.form?.requestSubmit();
+                    }
+                  }}
+                  rows={3}
+                />
+                <div className="meta-row">
+                  <span>
+                    {words > 0 ? `${words} word${words === 1 ? "" : "s"}` : "Empty"}
+                    {" · ⌘/Ctrl + Enter"}
+                  </span>
+                  {textDirty ? <span className="dirty">Not on display</span> : null}
+                </div>
+
+                {hasLinks && (
+                  <div className="hint">
+                    <Link2 size={13} />
+                    Links open as tappable targets on the display
+                  </div>
+                )}
+
+                {(showTextPreview || hasLinks) && helperTextInput.trim() && (
+                  <div className="render-preview anim-fade">
+                    <p className="render-preview-label">Preview</p>
+                    <p className="render-preview-body">{renderTextWithLinks(helperTextInput)}</p>
+                  </div>
+                )}
+
+                <div className="action-row">
+                  <button
+                    type="submit"
+                    className={`btn btn-primary ${textDirty ? "emphasis" : ""}`}
+                    disabled={!textDirty}
+                  >
+                    {textSent ? <><Check size={15} /> Sent</> : "Send"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleTextClear}
+                    className="btn btn-ghost"
+                    disabled={!helperTextInput && !syncData.text}
+                    style={{ minWidth: 76 }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
-          {/* ── Footer ── */}
-          <div className="helper-footer">
+          <div className="footer-bar">
             <button
               onClick={handleReset}
-              className={`btn-danger w-full ${resetSuccess ? "btn-success" : ""}`}
+              className={`btn btn-danger ${resetSuccess ? "success" : ""}`}
+              style={{ width: "100%" }}
               disabled={!hasLiveContent && !resetSuccess}
             >
               {resetSuccess ? <Check size={15} /> : <RotateCcw size={15} />}
-              {resetSuccess ? "Screen cleared" : "Reset Naeem's screen"}
+              {resetSuccess ? "Display cleared" : "Reset display"}
             </button>
           </div>
         </div>
@@ -651,81 +630,84 @@ function App() {
     );
   }
 
-  // ─── 4. Naeem Screen ─────────────────────────────────────────────────────────
+  // ─── Naeem ───────────────────────────────────────────────────────────────────
   if (role === "naeem") {
-    const colorClass =
-      syncData.color === "red" ? "color-red" :
-        syncData.color === "green" ? "color-green" :
-          "color-dark";
-
+    const colorMod =
+      syncData.color === "red" ? "red" :
+        syncData.color === "green" ? "green" : "";
     const { blink } = syncData;
     const hasOption = !!syncData.option;
     const hasText = !!syncData.text;
 
-    const rootClasses = [
-      "naeem-root",
-      colorClass,
+    const rootClass = [
+      "display",
+      colorMod,
       blink.screen ? "blink-screen-active" : "",
       !blink.screen && blink.color ? "blink-color-active" : "",
     ].filter(Boolean).join(" ");
 
     return (
-      <div className={rootClasses}>
+      <div className={rootClass}>
+        <div className="display-chrome">
+          <button onClick={() => setRole(null)} className="btn-icon" title="Back">
+            <ArrowLeft size={15} />
+          </button>
+          <span className={`badge ${hasOption || hasText || colorMod ? "badge-live" : "badge-idle"}`}>
+            <span className="badge-dot" />
+            {hasOption || hasText || colorMod ? "Receiving" : "Standby"}
+          </span>
+        </div>
+
         {hasOption ? (
           <>
-            <div className="naeem-top">
+            <div className="display-top">
               <span className={[
-                "naeem-letter",
-                blink.option ? "blink-option-active" : "animate-pop-in",
+                "display-letter",
+                blink.option ? "blink-option-active" : "anim-pop",
               ].filter(Boolean).join(" ")}>
                 {syncData.option}
               </span>
             </div>
-            <div className="naeem-divider" />
-            <div className="naeem-bottom">
+            <div className="display-rule" />
+            <div className="display-bottom">
               {hasText ? (
-                <div className="naeem-text-area animate-fade-in">
-                  <p className="naeem-text" style={getTextStyle(syncData.text, false)}>
+                <div className="display-copy-wrap anim-fade">
+                  <p className="display-text" style={getTextStyle(syncData.text, false)}>
                     {renderTextWithLinks(syncData.text)}
                   </p>
                   <button onClick={handleCopy} className={`copy-btn ${copied ? "copied" : ""}`}>
-                    {copied ? <Check size={15} /> : <Copy size={15} />}
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
                     {copied ? "Copied" : "Copy"}
                   </button>
                 </div>
               ) : (
-                <span className="naeem-idle-sm animate-pulse-slow">Waiting for text</span>
+                <span className="wait-sm anim-pulse-soft">Waiting for text</span>
               )}
             </div>
           </>
         ) : (
-          <div className="naeem-fullscreen">
+          <div className="display-full">
             {hasText ? (
-              <div className="naeem-fulltext-area animate-fade-in">
-                <p className="naeem-fulltext" style={getTextStyle(syncData.text, true)}>
+              <div className="display-copy-wrap anim-fade">
+                <p className="display-text lg" style={getTextStyle(syncData.text, true)}>
                   {renderTextWithLinks(syncData.text)}
                 </p>
                 <button onClick={handleCopy} className={`copy-btn ${copied ? "copied" : ""}`}>
-                  {copied ? <Check size={15} /> : <Copy size={15} />}
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
                   {copied ? "Copied" : "Copy"}
                 </button>
               </div>
             ) : (
-              <div className="naeem-idle-wrap">
-                <div className="naeem-idle-ring" aria-hidden>
-                  <div className="naeem-idle-ring-inner" />
+              <div className="wait">
+                <div className="wait-ring" aria-hidden>
+                  <div className="wait-core" />
                 </div>
-                <span className="naeem-idle">Waiting for cue</span>
-                <span className="naeem-idle-hint">Helper will push the next signal</span>
+                <span className="wait-title">Standby</span>
+                <span className="wait-sub">Waiting for next cue</span>
               </div>
             )}
           </div>
         )}
-
-        <button onClick={() => setRole(null)} className="naeem-back" title="Change role">
-          <ArrowLeft size={14} />
-          Back
-        </button>
       </div>
     );
   }

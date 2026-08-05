@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { database } from "./firebaseConfig";
 import { ref, onValue, set } from "firebase/database";
 import {
-  Wand2,
   Copy,
   RotateCcw,
   LogOut,
@@ -14,6 +13,10 @@ import {
   ArrowLeft,
   Monitor,
   Radio,
+  SendHorizontal,
+  Maximize2,
+  SlidersHorizontal,
+  Github,
 } from "lucide-react";
 import "./index.css";
 
@@ -30,6 +33,130 @@ interface SyncData {
   blink: BlinkState;
 }
 
+/** CueLink brand mark — two nodes linked by a live cue beam */
+function BrandMark({
+  size = 28,
+  className = "",
+  onClick,
+}: {
+  size?: number;
+  className?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      style={onClick ? { cursor: "pointer" } : undefined}
+    >
+      <rect width="64" height="64" rx="16" fill="#0c0f14" />
+      <rect
+        x="1.5"
+        y="1.5"
+        width="61"
+        height="61"
+        rx="14.5"
+        stroke="#3dffe8"
+        strokeOpacity="0.28"
+        strokeWidth="1.5"
+      />
+      <rect x="12" y="22" width="16" height="20" rx="5" fill="#3dffe8" />
+      <rect x="36" y="22" width="16" height="20" rx="5" fill="#e8ecf2" />
+      <path d="M27 32h10" stroke="#3dffe8" strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx="44" cy="18" r="3" fill="#3dffe8" />
+    </svg>
+  );
+}
+
+function Wordmark({ size = "md" }: { size?: "md" | "lg" }) {
+  const Tag = size === "lg" ? "h1" : "span";
+  return (
+    <Tag className={size === "lg" ? "auth-title" : "brand-name"}>
+      Cue<span className="brand-accent">Link</span>
+    </Tag>
+  );
+}
+
+const GITHUB_URL = "https://github.com/naeem-gg";
+
+function Credit({ variant = "block" }: { variant?: "block" | "inline" | "footer" }) {
+  const name = (
+    <a
+      href={GITHUB_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="credit-link"
+      title="github.com/naeem-gg"
+    >
+      Naeem
+    </a>
+  );
+
+  if (variant === "inline") {
+    return (
+      <div className="credit-inline">
+        <span>CueLink</span>
+        <span className="credit-dot" />
+        <span className="credit-by">
+          Built by {name}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="credit-gh"
+            aria-label="Naeem on GitHub"
+            title="github.com/naeem-gg"
+          >
+            <Github size={12} strokeWidth={2} />
+          </a>
+        </span>
+      </div>
+    );
+  }
+  if (variant === "footer") {
+    return (
+      <p className="footer-credit">
+        Built by {name}
+        <a
+          href={GITHUB_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="credit-gh"
+          aria-label="Naeem on GitHub"
+          title="github.com/naeem-gg"
+        >
+          <Github size={12} strokeWidth={2} />
+        </a>
+      </p>
+    );
+  }
+  return (
+    <div className="credit">
+      <span>Built by</span>
+      {name}
+      <a
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="credit-gh"
+        aria-label="Naeem on GitHub"
+        title="github.com/naeem-gg"
+      >
+        <Github size={13} strokeWidth={2} />
+      </a>
+    </div>
+  );
+}
+
+const AUTH_KEY = "cuelink_auth";
+
 function renderTextWithLinks(text: string): React.ReactNode[] {
   const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"]+)/g;
   const parts: React.ReactNode[] = [];
@@ -42,13 +169,13 @@ function renderTextWithLinks(text: string): React.ReactNode[] {
 
     if (match[1] && match[2]) {
       parts.push(
-        <a key={key++} href={match[2]} target="_blank" rel="noopener noreferrer" className="naeem-link">
+        <a key={key++} href={match[2]} target="_blank" rel="noopener noreferrer" className="cue-link">
           {match[1]}
         </a>
       );
     } else if (match[3]) {
       parts.push(
-        <a key={key++} href={match[3]} target="_blank" rel="noopener noreferrer" className="naeem-link">
+        <a key={key++} href={match[3]} target="_blank" rel="noopener noreferrer" className="cue-link">
           {match[3]}
         </a>
       );
@@ -90,11 +217,15 @@ function App() {
   const [loginError, setLoginError] = useState(false);
   const [remotePassword, setRemotePassword] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const stored = localStorage.getItem("qna_auth");
+    const stored = localStorage.getItem(AUTH_KEY) ?? localStorage.getItem("qna_auth");
+    if (stored && !localStorage.getItem(AUTH_KEY) && localStorage.getItem("qna_auth")) {
+      localStorage.setItem(AUTH_KEY, stored);
+      localStorage.removeItem("qna_auth");
+    }
     return stored !== null && stored === import.meta.env.VITE_PASSWORD;
   });
   const [secretClicks, setSecretClicks] = useState(0);
-  const [role, setRole] = useState<"helper" | "naeem" | null>(null);
+  const [role, setRole] = useState<"helper" | "viewer" | null>(null);
   const [syncData, setSyncData] = useState<SyncData>({
     option: null,
     text: "",
@@ -114,7 +245,7 @@ function App() {
       const dbPw = snapshot.val();
       setRemotePassword(dbPw);
 
-      const stored = localStorage.getItem("qna_auth");
+      const stored = localStorage.getItem(AUTH_KEY);
       const activePw = dbPw || import.meta.env.VITE_PASSWORD;
 
       if (stored !== null) {
@@ -123,7 +254,7 @@ function App() {
         } else {
           setIsAuthenticated(false);
           setRole(null);
-          localStorage.removeItem("qna_auth");
+          localStorage.removeItem(AUTH_KEY);
         }
       }
     });
@@ -157,7 +288,7 @@ function App() {
     e.preventDefault();
     const activePw = remotePassword || import.meta.env.VITE_PASSWORD;
     if (password === activePw) {
-      localStorage.setItem("qna_auth", password);
+      localStorage.setItem(AUTH_KEY, password);
       setIsAuthenticated(true);
       setLoginError(false);
     } else {
@@ -169,7 +300,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("qna_auth");
+    localStorage.removeItem(AUTH_KEY);
     setIsAuthenticated(false);
     setRole(null);
     setPassword("");
@@ -248,7 +379,8 @@ function App() {
         <div className="auth anim-enter">
           <div className="auth-card">
             <div className="auth-brand">
-              <div
+              <BrandMark
+                size={56}
                 className="auth-logo"
                 onClick={() => {
                   setSecretClicks((prev) => {
@@ -270,11 +402,14 @@ function App() {
                     return next;
                   });
                 }}
-              >
-                QN
+              />
+              <div className="auth-wordmark">
+                <Wordmark size="lg" />
+                <p className="auth-tagline">Live cue sync</p>
               </div>
-              <h1 className="auth-title">QNA Realtime</h1>
-              <p className="auth-desc">Sign in to open the live cue console</p>
+              <p className="auth-desc">
+                Connect Helper and display in realtime — send answers, signals, and text instantly
+              </p>
             </div>
             <form onSubmit={handleLogin} className="auth-form">
               <div className="field-row">
@@ -307,6 +442,7 @@ function App() {
                 Continue
               </button>
             </form>
+            <Credit />
           </div>
         </div>
       </div>
@@ -320,9 +456,9 @@ function App() {
         <div className="frame anim-enter" style={{ maxWidth: 440 }}>
           <div className="topbar">
             <div className="brand">
-              <div className="brand-mark">QN</div>
+              <BrandMark size={28} className="brand-mark" />
               <div className="brand-text">
-                <span className="brand-name">QNA Realtime</span>
+                <Wordmark />
                 <span className="brand-sub">Select workspace</span>
               </div>
             </div>
@@ -332,18 +468,48 @@ function App() {
           </div>
           <div className="role-grid">
             <button onClick={() => setRole("helper")} className="role-card">
-              <div className="role-icon"><Wand2 size={18} strokeWidth={1.75} /></div>
-              <span className="role-label">Helper</span>
-              <span className="role-desc">Operator console for cues, signals, and broadcast text</span>
-              <span className="role-kbd">CONTROL</span>
+              <div className="role-visual helper" aria-hidden>
+                <div className="role-visual-row">
+                  <span className="role-key">A</span>
+                  <span className="role-key">B</span>
+                  <span className="role-key active">C</span>
+                </div>
+                <div className="role-visual-send">
+                  <SendHorizontal size={14} strokeWidth={2.25} />
+                  <span>Send cue</span>
+                </div>
+              </div>
+              <div className="role-meta">
+                <div className="role-icon">
+                  <SlidersHorizontal size={18} strokeWidth={1.75} />
+                </div>
+                <span className="role-label">Helper</span>
+                <span className="role-desc">Control panel — pick answers, colors, blink, and text</span>
+                <span className="role-kbd">CONTROL</span>
+              </div>
             </button>
-            <button onClick={() => setRole("naeem")} className="role-card">
-              <div className="role-icon"><Monitor size={18} strokeWidth={1.75} /></div>
-              <span className="role-label">Naeem</span>
-              <span className="role-desc">Fullscreen display for live answers and messages</span>
-              <span className="role-kbd">DISPLAY</span>
+            <button onClick={() => setRole("viewer")} className="role-card">
+              <div className="role-visual viewer" aria-hidden>
+                <div className="role-screen">
+                  <span className="role-screen-letter">C</span>
+                  <span className="role-screen-bar" />
+                </div>
+                <div className="role-visual-send">
+                  <Maximize2 size={14} strokeWidth={2.25} />
+                  <span>Full screen</span>
+                </div>
+              </div>
+              <div className="role-meta">
+                <div className="role-icon">
+                  <Monitor size={18} strokeWidth={1.75} />
+                </div>
+                <span className="role-label">Viewer</span>
+                <span className="role-desc">Live display — show cues fullscreen for the audience</span>
+                <span className="role-kbd">VIEWER</span>
+              </div>
             </button>
           </div>
+          <Credit variant="inline" />
         </div>
       </div>
     );
@@ -378,9 +544,9 @@ function App() {
         <div className="frame frame-flush anim-enter">
           <div className="topbar">
             <div className="brand">
-              <div className="brand-mark">QN</div>
+              <BrandMark size={28} className="brand-mark" />
               <div className="brand-text">
-                <span className="brand-name">Control</span>
+                <Wordmark />
                 <span className="brand-sub">Helper console</span>
               </div>
             </div>
@@ -624,14 +790,15 @@ function App() {
               {resetSuccess ? <Check size={15} /> : <RotateCcw size={15} />}
               {resetSuccess ? "Display cleared" : "Reset display"}
             </button>
+            <Credit variant="footer" />
           </div>
         </div>
       </div>
     );
   }
 
-  // ─── Naeem ───────────────────────────────────────────────────────────────────
-  if (role === "naeem") {
+  // ─── Viewer ──────────────────────────────────────────────────────────────────
+  if (role === "viewer") {
     const colorMod =
       syncData.color === "red" ? "red" :
         syncData.color === "green" ? "green" : "";
@@ -699,11 +866,22 @@ function App() {
               </div>
             ) : (
               <div className="wait">
-                <div className="wait-ring" aria-hidden>
-                  <div className="wait-core" />
-                </div>
-                <span className="wait-title">Standby</span>
-                <span className="wait-sub">Waiting for next cue</span>
+                <BrandMark size={44} />
+                <span className="wait-title">
+                  Cue<span style={{ color: "var(--color-accent)" }}>Link</span>
+                </span>
+                <span className="wait-sub">Standby · waiting for next cue</span>
+                <span className="wait-sub" style={{ marginTop: 6 }}>
+                  Built by{" "}
+                  <a
+                    href={GITHUB_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="credit-link"
+                  >
+                    Naeem
+                  </a>
+                </span>
               </div>
             )}
           </div>
